@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>議題吸い上げアプリ</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --line: #e5e7eb;
+      --text: #111827;
+      --sub: #6b7280;
+      --accent: #2563eb;
+      --accent-soft: #eff6ff;
+      --ok: #059669;
+      --warn: #92400e;
+      --warn-bg: #fef3c7;
+      --danger: #b91c1c;
+      --danger-bg: #fee2e2;
+      --shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 20px 16px 40px; }
+    .hero { margin-bottom: 18px; }
+    .hero h1 { margin: 0 0 8px; font-size: 28px; }
+    .hero p { margin: 0; color: var(--sub); line-height: 1.7; }
+
+    .banner {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: var(--warn-bg);
+      color: var(--warn);
+      font-size: 14px;
+      line-height: 1.7;
+      border: 1px solid #fcd34d;
+    }
+
+    .tabs { display: flex; gap: 10px; margin: 18px 0 20px; flex-wrap: wrap; }
+    .tab-btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 10px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .question-card {
+      min-height: 480px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 16px; }
+    .step { display: none; animation: fade 0.25s ease; }
+    .step.active { display: block; }
+
+    @keyframes fade {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .step-number { font-size: 13px; color: var(--accent); font-weight: 800; margin-bottom: 10px; }
+    .step h2 { margin: 0 0 10px; font-size: 24px; line-height: 1.4; }
+    .hint { margin: 0 0 16px; color: var(--sub); line-height: 1.7; font-size: 14px; }
+
+    input[type="text"],
+    input[type="date"],
+    input[type="file"],
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 15px;
+      font-size: 16px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+    }
+
+    input[type="file"] {
+      padding: 12px;
+      background: #fbfdff;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 130px;
+      line-height: 1.7;
+    }
+
+    input:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    }
+
+    .choice-group { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .choice {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 14px;
+      padding: 14px 10px;
+      text-align: center;
+      font-weight: 800;
+      cursor: pointer;
+      user-select: none;
+    }
+    .choice.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 13px 18px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .btn-main { background: var(--accent); color: #fff; }
+    .btn-sub { background: #eef2f7; color: var(--text); }
+    .btn-ok { background: var(--ok); color: #fff; }
+    .btn-danger { background: var(--danger-bg); color: var(--danger); }
+
+    .progress {
+      height: 10px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #2563eb, #60a5fa);
+      transition: width 0.25s ease;
+    }
+
+    .summary-list { display: grid; gap: 12px; }
+    .summary-item {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: #fafafa;
+    }
+    .summary-item .label {
+      font-size: 12px;
+      color: var(--sub);
+      margin-bottom: 6px;
+      font-weight: 800;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+    .p-high { background: #fee2e2; color: #b91c1c; }
+    .p-mid { background: #fef3c7; color: #92400e; }
+    .p-low { background: #dcfce7; color: #166534; }
+    .p-week { background: #dbeafe; color: #1d4ed8; }
+
+    .agenda-list { display: grid; gap: 12px; }
+    .agenda-item {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+    .agenda-item h3 { margin: 0 0 10px; font-size: 19px; line-height: 1.5; }
+    .agenda-item p { margin: 0 0 8px; color: #374151; line-height: 1.7; }
+    .agenda-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+
+    .empty { color: var(--sub); text-align: center; padding: 28px 14px; }
+    .success {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #ecfdf5;
+      color: #065f46;
+      font-weight: 700;
+      display: none;
+    }
+    .error {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: var(--danger-bg);
+      color: var(--danger);
+      font-weight: 700;
+      display: none;
+    }
+
+    .file-list { margin-top: 10px; display: grid; gap: 8px; }
+    .file-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 13px;
+      font-weight: 700;
+      width: fit-content;
+      max-width: 100%;
+      word-break: break-all;
+    }
+
+    .small { font-size: 13px; color: var(--sub); line-height: 1.7; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; }
+
+    @media (max-width: 820px) {
+      .grid { grid-template-columns: 1fr; }
+      .choice-group { grid-template-columns: 1fr; }
+      .question-card { min-height: 0; }
+      .step h2 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>議題吸い上げアプリ</h1>
+      <p>
+        GitHub Pagesにそのまま置ける、URL固定版です。<br>
+        投稿者は設定不要で、そのまま入力して送信できます。
+      </p>
+      <div class="banner">
+        <strong>使い方：</strong> このHTML内の <span class="mono">SCRIPT_URL</span> に、Apps Script WebアプリURLを1回だけ入れてください。<br>
+        公開後は、投稿者側で設定作業は不要です。
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="inputPanel">入力</button>
+      <button class="tab-btn" data-tab="agendaPanel">今週のプレビュー</button>
+    </div>
+
+    <section id="inputPanel" class="panel active">
+      <div class="grid">
+        <div class="card question-card">
+          <div>
+            <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+
+            <div class="step active" data-step="1">
+              <div class="step-number">STEP 1 / 8</div>
+              <h2>あなたの氏名を入力してください</h2>
+              <p class="hint">必須です。会議での担当や発言者の特定に使います。</p>
+              <input id="name" type="text" placeholder="例：山田 太郎" />
+            </div>
+
+            <div class="step" data-step="2">
+              <div class="step-number">STEP 2 / 8</div>
+              <h2>今回、何について話したいですか？</h2>
+              <p class="hint">短くて大丈夫です。たとえば「LINEの反応率」「イベント集客」など。</p>
+              <input id="title" type="text" placeholder="例：LINE配信の反応率低下" />
+            </div>
+
+            <div class="step" data-step="3">
+              <div class="step-number">STEP 3 / 8</div>
+              <h2>今、どんな状況ですか？</h2>
+              <p class="hint">まず状況のタイプを選んでから書くと楽です。</p>
+              <div class="choice-group" id="situationTypeChoices" style="margin-bottom:12px;">
+                <div class="choice" data-value="新規提案">新規提案</div>
+                <div class="choice" data-value="進捗">進捗</div>
+                <div class="choice" data-value="問題">問題</div>
+              </div>
+              <textarea id="currentSituation" placeholder="例：現在の進捗は◯◯で、△△まで完了している。残りは□□の対応が必要。"></textarea>
+              <p class="small">※ 新規提案 →「何をやろうとしているか」 / 進捗 →「どこまで進んでいるか」 / 問題 →「どこで止まっているか」</p>
+            </div>
+
+            <div class="step" data-step="4">
+              <div class="step-number">STEP 4 / 8</div>
+              <h2>何に困っていますか？</h2>
+              <p class="hint">一番の悩みや詰まりポイントを書いてください。</p>
+              <textarea id="problem" placeholder="例：原因が特定できず、どこから直すべきか決めきれない。"></textarea>
+            </div>
+
+            <div class="step" data-step="5">
+              <div class="step-number">STEP 5 / 8</div>
+              <h2>会議で何を決めたいですか？</h2>
+              <p class="hint">会議後に何が決まっていればOKかを書いてください。</p>
+              <textarea id="decisionWanted" placeholder="例：次回配信で優先して修正する点と担当者を決めたい。"></textarea>
+            </div>
+
+            <div class="step" data-step="6">
+              <div class="step-number">STEP 6 / 8</div>
+              <h2>緊急度はどれくらいですか？</h2>
+              <p class="hint">高・中・低から選んでください。</p>
+              <div class="choice-group" id="priorityChoices">
+                <div class="choice" data-value="高">高</div>
+                <div class="choice" data-value="中">中</div>
+                <div class="choice" data-value="低">低</div>
+              </div>
+            </div>
+
+            <div class="step" data-step="7">
+              <div class="step-number">STEP 7 / 8</div>
+              <h2>期限があれば教えてください</h2>
+              <p class="hint">任意です。なければ空欄でOKです。</p>
+              <input id="deadline" type="date" />
+            </div>
+
+            <div class="step" data-step="8">
+              <div class="step-number">STEP 8 / 8</div>
+              <h2>資料を添付できます</h2>
+              <p class="hint">任意です。PDF、画像、表など関連資料を選択してください。複数選択できます。</p>
+              <input id="attachments" type="file" multiple />
+              <div class="file-list" id="selectedFilesPreview"></div>
+              <p class="small">Apps Script版では、ファイルはGoogle Driveへ保存する想定です。</p>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn-sub" id="prevBtn">戻る</button>
+            <button class="btn-main" id="nextBtn">次へ</button>
+            <button class="btn-ok" id="saveBtn" style="display:none;">スプレッドシートへ送信する</button>
+          </div>
+
+          <div class="success" id="successMessage">送信が完了しました。</div>
+          <div class="error" id="errorMessage">送信に失敗しました。</div>
+        </div>
+
+        <div class="card">
+          <div class="summary-list">
+            <div class="summary-item"><div class="label">氏名</div><div id="previewName">未入力</div></div>
+            <div class="summary-item"><div class="label">テーマ</div><div id="previewTitle">未入力</div></div>
+            <div class="summary-item"><div class="label">週キー</div><div id="previewWeekKey">自動計算されます</div></div>
+            <div class="summary-item"><div class="label">投稿日</div><div id="previewPostedAt">送信時に自動入力されます</div></div>
+            <div class="summary-item"><div class="label">添付資料</div><div id="previewAttachments">未選択</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="agendaPanel" class="panel">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+          <div>
+            <strong>今週の投稿プレビュー</strong>
+            <div class="small">この画面はブラウザ上の確認用です。実際の集約はスプレッドシート側で行います。</div>
+          </div>
+          <div class="actions" style="margin-top:0;">
+            <button class="btn-sub" id="seedBtn">サンプル追加</button>
+            <button class="btn-danger" id="clearBtn">プレビュー消去</button>
+          </div>
+        </div>
+        <div class="agenda-list" id="agendaList"></div>
+        <div class="empty" id="emptyMessage">まだプレビューがありません。</div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1yRawIf1Dl-Kz8FWWOgx02OF7RlSNvyBYkinHyO_xfjECpVSkG4l8L35OIYW1rw8GVQ/exec';
+    const STORAGE_KEY = 'gidai_demo_weekly_preview_v3';
+
+    const state = {
+      currentStep: 1,
+      isSubmitting: false,
+      form: {
+        name: '',
+        title: '',
+        situationType: '',
+        currentSituation: '',
+        problem: '',
+        decisionWanted: '',
+        priority: '',
+        deadline: '',
+        attachments: []
+      },
+      agendas: loadLocalPreview()
+    };
+
+    const els = {
+      tabs: document.querySelectorAll('.tab-btn'),
+      panels: document.querySelectorAll('.panel'),
+      steps: document.querySelectorAll('.step'),
+      progressBar: document.getElementById('progressBar'),
+      prevBtn: document.getElementById('prevBtn'),
+      nextBtn: document.getElementById('nextBtn'),
+      saveBtn: document.getElementById('saveBtn'),
+      successMessage: document.getElementById('successMessage'),
+      errorMessage: document.getElementById('errorMessage'),
+      name: document.getElementById('name'),
+      title: document.getElementById('title'),
+      currentSituation: document.getElementById('currentSituation'),
+      problem: document.getElementById('problem'),
+      decisionWanted: document.getElementById('decisionWanted'),
+      deadline: document.getElementById('deadline'),
+      attachments: document.getElementById('attachments'),
+      selectedFilesPreview: document.getElementById('selectedFilesPreview'),
+      previewName: document.getElementById('previewName'),
+      previewTitle: document.getElementById('previewTitle'),
+      previewWeekKey: document.getElementById('previewWeekKey'),
+      previewPostedAt: document.getElementById('previewPostedAt'),
+      previewAttachments: document.getElementById('previewAttachments'),
+      agendaList: document.getElementById('agendaList'),
+      emptyMessage: document.getElementById('emptyMessage'),
+      priorityChoices: document.querySelectorAll('#priorityChoices .choice'),
+      situationTypeChoices: document.querySelectorAll('#situationTypeChoices .choice'),
+      seedBtn: document.getElementById('seedBtn'),
+      clearBtn: document.getElementById('clearBtn')
+    };
+
+    function loadLocalPreview() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveLocalPreview() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.agendas));
+    }
+
+    function switchTab(tabId) {
+      els.tabs.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabId));
+      els.panels.forEach(panel => panel.classList.toggle('active', panel.id === tabId));
+    }
+
+    function showStep(step) {
+      state.currentStep = step;
+      els.steps.forEach(el => el.classList.toggle('active', Number(el.dataset.step) === step));
+      els.progressBar.style.width = `${(step / 8) * 100}%`;
+      els.prevBtn.style.display = step === 1 ? 'none' : 'inline-block';
+      els.nextBtn.style.display = step === 8 ? 'none' : 'inline-block';
+      els.saveBtn.style.display = step === 8 ? 'inline-block' : 'none';
+    }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function formatNow() {
+      return new Date().toLocaleString('ja-JP', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function toDateInput(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function getWeekKey(date = new Date()) {
+      const target = new Date(date);
+      const dayNr = (target.getDay() + 6) % 7;
+      target.setDate(target.getDate() - dayNr + 3);
+      const firstThursday = new Date(target.getFullYear(), 0, 4);
+      const firstDayNr = (firstThursday.getDay() + 6) % 7;
+      firstThursday.setDate(firstThursday.getDate() - firstDayNr + 3);
+      const weekNo = 1 + Math.round((target - firstThursday) / 604800000);
+      return `${target.getFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+    }
+
+    async function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = String(reader.result || '');
+          const base64 = result.includes(',') ? result.split(',')[1] : result;
+          resolve({
+            name: file.name,
+            mimeType: file.type || 'application/octet-stream',
+            size: file.size || 0,
+            base64
+          });
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function buildPayload() {
+      const attachments = Array.from(els.attachments.files || []);
+      const encodedFiles = [];
+      for (const file of attachments) {
+        encodedFiles.push(await fileToBase64(file));
+      }
+
+      return {
+        source: 'gidai-demo-html-fixed-url',
+        submittedAt: new Date().toISOString(),
+        weekKey: getWeekKey(new Date()),
+        name: state.form.name.trim(),
+        title: state.form.title.trim(),
+        situationType: state.form.situationType || '',
+        currentSituation: state.form.currentSituation.trim(),
+        problem: state.form.problem.trim(),
+        decisionWanted: state.form.decisionWanted.trim(),
+        priority: state.form.priority,
+        deadline: state.form.deadline || '',
+        attachments: encodedFiles
+      };
+    }
+
+    function validateCurrentStep() {
+      if (state.currentStep === 1 && !state.form.name.trim()) return '氏名は必須です。';
+      if (state.currentStep === 2 && !state.form.title.trim()) return 'テーマを入力してください。';
+      if (state.currentStep === 3 && !state.form.situationType.trim()) return '状況タイプを選択してください。';
+      if (state.currentStep === 6 && !state.form.priority.trim()) return '緊急度を選択してください。';
+      return '';
+    }
+
+    function buildPreviewItem(form) {
+      const postedAt = formatNow();
+      return {
+        id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        name: form.name,
+        rawTitle: form.title,
+        title: `${form.title}について検討する`,
+        situationType: form.situationType,
+        priority: form.priority,
+        currentSituation: form.currentSituation,
+        problem: form.problem,
+        decisionWanted: form.decisionWanted,
+        deadline: form.deadline || '未設定',
+        postedAt,
+        weekKey: getWeekKey(new Date()),
+        attachments: [...form.attachments]
+      };
+    }
+
+    function priorityClass(priority) {
+      if (priority === '高') return 'p-high';
+      if (priority === '中') return 'p-mid';
+      return 'p-low';
+    }
+
+    function renderSelectedFilesPreview() {
+      els.selectedFilesPreview.innerHTML = '';
+      if (!state.form.attachments.length) {
+        els.selectedFilesPreview.innerHTML = '<span class="small">ファイルはまだ選択されていません。</span>';
+        return;
+      }
+
+      state.form.attachments.forEach(fileName => {
+        const chip = document.createElement('div');
+        chip.className = 'file-chip';
+        chip.textContent = `📎 ${fileName}`;
+        els.selectedFilesPreview.appendChild(chip);
+      });
+    }
+
+    function renderPreview() {
+      els.previewName.textContent = state.form.name || '未入力';
+      els.previewTitle.textContent = state.form.title || '未入力';
+      els.previewWeekKey.textContent = getWeekKey(new Date());
+      els.previewAttachments.innerHTML = state.form.attachments.length
+        ? state.form.attachments.map(name => `<div class="file-chip">📎 ${escapeHtml(name)}</div>`).join('')
+        : '未選択';
+    }
+
+    function renderAgendas() {
+      els.agendaList.innerHTML = '';
+      const currentWeek = getWeekKey(new Date());
+      const filtered = state.agendas.filter(a => a.weekKey === currentWeek);
+      els.emptyMessage.style.display = filtered.length ? 'none' : 'block';
+
+      filtered.forEach(a => {
+        const div = document.createElement('div');
+        div.className = 'agenda-item';
+        div.innerHTML = `
+          <div class="agenda-meta">
+            <span class="pill p-week">${escapeHtml(a.weekKey)}</span>
+            <span class="pill ${priorityClass(a.priority)}">緊急度：${escapeHtml(a.priority)}</span>
+            <span class="pill">状況：${escapeHtml(a.situationType || '未設定')}</span>
+          </div>
+          <h3>${escapeHtml(a.title)}</h3>
+          <p><strong>投稿者：</strong>${escapeHtml(a.name)}</p>
+          <p><strong>投稿日時：</strong>${escapeHtml(a.postedAt)}</p>
+          <p><strong>現状：</strong>${escapeHtml(a.currentSituation || '未入力')}</p>
+          <p><strong>困りごと：</strong>${escapeHtml(a.problem || '未入力')}</p>
+          <p><strong>会議で決めたいこと：</strong>${escapeHtml(a.decisionWanted || '未入力')}</p>
+          <p><strong>期限：</strong>${escapeHtml(a.deadline)}</p>
+          <p><strong>添付資料：</strong>${a.attachments.length ? a.attachments.map(name => `📎 ${escapeHtml(name)}`).join(' / ') : 'なし'}</p>
+        `;
+        els.agendaList.appendChild(div);
+      });
+    }
+
+    function resetForm() {
+      state.form = {
+        name: '',
+        title: '',
+        situationType: '',
+        currentSituation: '',
+        problem: '',
+        decisionWanted: '',
+        priority: '',
+        deadline: '',
+        attachments: []
+      };
+
+      els.name.value = '';
+      els.title.value = '';
+      els.currentSituation.value = '';
+      els.problem.value = '';
+      els.decisionWanted.value = '';
+      els.deadline.value = '';
+      els.attachments.value = '';
+      els.previewPostedAt.textContent = '送信時に自動入力されます';
+      els.priorityChoices.forEach(choice => choice.classList.remove('selected'));
+      els.situationTypeChoices.forEach(choice => choice.classList.remove('selected'));
+      els.currentSituation.placeholder = '例：現在の進捗は◯◯で、△△まで完了している。残りは□□の対応が必要。';
+      renderSelectedFilesPreview();
+      renderPreview();
+      showStep(1);
+    }
+
+    function showSuccess(message) {
+      els.successMessage.textContent = message;
+      els.successMessage.style.display = 'block';
+      els.errorMessage.style.display = 'none';
+      setTimeout(() => {
+        els.successMessage.style.display = 'none';
+      }, 2600);
+    }
+
+    function showError(message) {
+      els.errorMessage.textContent = message;
+      els.errorMessage.style.display = 'block';
+      els.successMessage.style.display = 'none';
+      setTimeout(() => {
+        els.errorMessage.style.display = 'none';
+      }, 3800);
+    }
+
+    function setSubmitting(flag) {
+      state.isSubmitting = flag;
+      els.saveBtn.disabled = flag;
+      els.saveBtn.textContent = flag ? '送信中です...' : 'スプレッドシートへ送信する';
+    }
+
+    async function submitToScript(payload) {
+      if (!SCRIPT_URL || SCRIPT_URL === 'PASTE_YOUR_APPS_SCRIPT_URL_HERE') {
+        throw new Error('SCRIPT_URL に Apps Script WebアプリURLを設定してください。');
+      }
+
+      const res = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+
+      const text = await res.text();
+      let data = {};
+      try { data = JSON.parse(text); } catch { data = { raw: text }; }
+
+      if (!res.ok || data.ok === false) {
+        throw new Error(data.message || 'Apps Scriptへの送信に失敗しました。');
+      }
+
+      return data;
+    }
+
+    els.tabs.forEach(btn => {
+      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+
+    els.name.addEventListener('input', e => {
+      state.form.name = e.target.value;
+      renderPreview();
+    });
+
+    els.title.addEventListener('input', e => {
+      state.form.title = e.target.value;
+      renderPreview();
+    });
+
+    els.currentSituation.addEventListener('input', e => {
+      state.form.currentSituation = e.target.value;
+    });
+
+    els.situationTypeChoices.forEach(choice => {
+      choice.addEventListener('click', () => {
+        els.situationTypeChoices.forEach(c => c.classList.remove('selected'));
+        choice.classList.add('selected');
+        state.form.situationType = choice.dataset.value;
+
+        if (state.form.situationType === '新規提案') {
+          els.currentSituation.placeholder = '例：新しく◯◯を実施したいと考えている。目的は△△で、現状は未着手。';
+        } else if (state.form.situationType === '進捗') {
+          els.currentSituation.placeholder = '例：現在の進捗は◯◯まで完了。残りは△△と□□。期限は来週予定。';
+        } else if (state.form.situationType === '問題') {
+          els.currentSituation.placeholder = '例：◯◯の作業が△△で止まっている。原因は□□の可能性。';
+        }
+      });
+    });
+
+    els.problem.addEventListener('input', e => {
+      state.form.problem = e.target.value;
+    });
+
+    els.decisionWanted.addEventListener('input', e => {
+      state.form.decisionWanted = e.target.value;
+    });
+
+    els.deadline.addEventListener('input', e => {
+      state.form.deadline = e.target.value;
+    });
+
+    els.priorityChoices.forEach(choice => {
+      choice.addEventListener('click', () => {
+        els.priorityChoices.forEach(c => c.classList.remove('selected'));
+        choice.classList.add('selected');
+        state.form.priority = choice.dataset.value;
+      });
+    });
+
+    els.attachments.addEventListener('change', e => {
+      const files = Array.from(e.target.files || []);
+      state.form.attachments = files.map(file => file.name);
+      renderSelectedFilesPreview();
+      renderPreview();
+    });
+
+    els.prevBtn.onclick = () => showStep(Math.max(1, state.currentStep - 1));
+
+    els.nextBtn.onclick = () => {
+      const err = validateCurrentStep();
+      if (err) return alert(err);
+      showStep(Math.min(8, state.currentStep + 1));
+    };
+
+    els.seedBtn.onclick = () => {
+      const samples = [
+        {
+          id: `${Date.now()}_a1`,
+          name: '斎藤',
+          rawTitle: 'LINE配信の反応率低下',
+          title: 'LINE配信の反応率低下について検討する',
+          situationType: '問題',
+          priority: '高',
+          currentSituation: '直近3回の配信で反応率が下がっている。',
+          problem: '原因が特定できず、改善優先順位を決めにくい。',
+          decisionWanted: '次回配信で直すポイントを決めたい。',
+          deadline: toDateInput(new Date()),
+          postedAt: formatNow(),
+          weekKey: getWeekKey(new Date()),
+          attachments: ['line-report.pdf']
+        }
+      ];
+      state.agendas = [...samples, ...state.agendas];
+      saveLocalPreview();
+      renderAgendas();
+      switchTab('agendaPanel');
+    };
+
+    els.clearBtn.onclick = () => {
+      state.agendas = [];
+      saveLocalPreview();
+      renderAgendas();
+    };
+
+    els.saveBtn.onclick = async () => {
+      const err = validateCurrentStep();
+      if (err) return alert(err);
+      if (state.isSubmitting) return;
+
+      setSubmitting(true);
+      try {
+        const previewItem = buildPreviewItem(state.form);
+        const payload = await buildPayload();
+        await submitToScript(payload);
+
+        state.agendas.unshift(previewItem);
+        saveLocalPreview();
+        renderAgendas();
+        els.previewPostedAt.textContent = previewItem.postedAt;
+        showSuccess('スプレッドシートへの送信が完了しました。');
+
+        resetForm();
+        switchTab('agendaPanel');
+      } catch (error) {
+        showError(error.message || '送信に失敗しました。');
+      } finally {
+        setSubmitting(false);
+      }
+    };
+
+    showStep(1);
+    renderSelectedFilesPreview();
+    renderPreview();
+    renderAgendas();
+  </script>
+</body>
+</html>
